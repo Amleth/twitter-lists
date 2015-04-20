@@ -1,0 +1,1 @@
+nodemon --exec babel-node -- src/main.js --config config.yaml

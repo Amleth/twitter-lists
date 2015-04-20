@@ -1,0 +1,36 @@
+{
+  "name": "twitter-management",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "babel-jest": "*",
+    "jest-cli": "*"
+  },
+  "jest": {
+    "scriptPreprocessor": "./node_modules/babel-jest",
+    "testFileExtensions": [
+      "es6",
+      "js"
+    ],
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "es6"
+    ]
+  },
+  "dependencies": {
+    "bluebird": "*",
+    "colors": "*",
+    "core-js": "*",
+    "js-yaml": "*",
+    "lodash": "*",
+    "oauth": "*",
+    "path": "*",
+    "superagent": "*",
+    "twitter": "*",
+    "yargs": "*"
+  }
+}
