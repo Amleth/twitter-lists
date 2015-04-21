@@ -2,21 +2,19 @@
 
 console.log();
 
-import Twitter from 'twitter';
-import _ from 'lodash';
 import Promise from 'bluebird';
-import {argv} from 'yargs';
-import yaml from 'js-yaml';
-import fs from 'fs';
-import path from 'path';
 import colors from 'colors';
+import fs from 'fs';
+import yaml from 'js-yaml';
+import _ from 'lodash';
+import path from 'path';
+import Twitter from 'twitter';
+import {argv} from 'yargs';
 
 if (!argv.config) throw 'No config.yaml supplied thougs `--config` parameter';
 
 const configFilePath = path.join(path.dirname(path.dirname(require.main.filename)), argv.config);
 const config = yaml.safeLoad(fs.readFileSync(configFilePath, 'utf8'));
-const lists = config.lists;
-const me = '4mleth';
 const client = new Twitter(
   {
     consumer_key: config.consumer_key,
@@ -25,6 +23,7 @@ const client = new Twitter(
     access_token_secret: config.access_token_secret
   }
 );
+const me = config.me;
 
 //const getListsMemberships = JSON.parse(fs.readFileSync('./data/get.lists.memberships.json', 'utf8'));
 //const getListsMembers = JSON.parse(fs.readFileSync('./data/get.lists.members.json', 'utf8'));
@@ -74,16 +73,17 @@ const get_users_lookup = users_ids =>
   Promise.all(
     _.map(
       _.chunk(users_ids, 99),
-      some_users_ids => get('users/lookup', {user_id: some_users_ids.join(',')})
+        some_users_ids => get('users/lookup', {user_id: some_users_ids.join(',')})
     )
   );
 
 const display_users = (users_ids) => {
   get_users_lookup(users_ids)
     .then(r => {
-            console.log((r[0].length + ' accounts that are not in a list have been found').yellow);
-            _.map(r[0], user => console.log('https://twitter.com/' + user.screen_name))
-          })
+      let rflat = _.flatten(r);
+      console.log((rflat.length + ' accounts that are not in a list have been found').yellow);
+      _.map(rflat, user => console.log('https://twitter.com/' + user.screen_name))
+    })
     .catch(e => console.log(e));
 };
 
@@ -97,24 +97,22 @@ const process_lists = (lists) => {
   })));
   Promise.all(lists_users_promises)
     .then(r => {
-            _.map(r, list => _.map(list.users, user => users_ids_in_lists.push(user.id)));
-            display_users(_.difference(all_users_ids, users_ids_in_lists));
-          })
+      _.map(r, list => _.map(list.users, user => users_ids_in_lists.push(user.id)));
+      display_users(_.difference(all_users_ids, users_ids_in_lists));
+    })
     .catch(e => console.log(e));
 };
 
 Promise.all([
-              get('lists/list', {screen_name: me}),
-              get('friends/ids', {screen_name: me})
-            ])
+  get('lists/list', {screen_name: me}),
+  get('friends/ids', {screen_name: me})
+])
   .then(r => {
-          process_lists(r[0]);
-          all_users_ids = r[1].ids;
-        })
+    process_lists(r[0]);
+    all_users_ids = r[1].ids;
+  })
   .catch(e => console.log(e));
 
 // users/lookup: Returns fully-hydrated user objects for up to 100 users per request, as specified by comma-separated values passed to the user_id and/or screen_name parameters.
 // lists/memberships: Returns the lists the specified user has been added to. If user_id or screen_name are not provided the memberships for the authenticating user are returned.
 // friends/ids: Returns a cursored collection of user IDs for every user the specified user is following (otherwise known as their “friends”).
-
-//TODO : dans le .all faire un then sur chaque promesse pour voir ce qui se passe...
